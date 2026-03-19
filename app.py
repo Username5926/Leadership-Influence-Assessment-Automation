@@ -208,22 +208,57 @@ def _move_circle(slide_str, circle_name, new_x, new_y, new_cx, new_cy):
     pic   = re.sub(r'<a:ext cx="[^"]*" cy="[^"]*"/>', f'<a:ext cx="{new_cx}" cy="{new_cy}"/>', pic)
     return slide_str[:start] + pic + slide_str[end:]
 
+def _get_strat_circle_targets(strat_vals, threshold=0.3):
+    """Pull/Push 각각 평균과 ±0.3 초과하는 것. 없으면 최대 1개. 합쳐서 3개 초과시 차이 큰 순으로 3개."""
+    soft_avg = strat_vals[3]
+    hard_avg = strat_vals[9]
+
+    pull_diffs = [(i, abs(strat_vals[i] - soft_avg)) for i in range(3)]
+    push_diffs = [(i, abs(strat_vals[i] - hard_avg)) for i in range(4, 9)]
+
+    pull_over = [(i, d) for i, d in pull_diffs if d >= threshold]
+    push_over = [(i, d) for i, d in push_diffs if d >= threshold]
+
+    if not pull_over:
+        pull_over = [max(pull_diffs, key=lambda x: x[1])]
+    if not push_over:
+        push_over = [max(push_diffs, key=lambda x: x[1])]
+
+    combined = pull_over + push_over
+
+    if len(combined) > 3:
+        combined.sort(key=lambda x: -x[1])
+        selected = combined[:3]
+        # Pull/Push 각 최소 1개 보장
+        if not any(i < 3 for i, _ in selected):
+            best_pull = max(pull_over, key=lambda x: x[1])
+            worst_push = min((x for x in selected if x[0] >= 4), key=lambda x: x[1])
+            selected.remove(worst_push)
+            selected.append(best_pull)
+        if not any(i >= 4 for i, _ in selected):
+            best_push = max(push_over, key=lambda x: x[1])
+            worst_pull = min((x for x in selected if x[0] < 3), key=lambda x: x[1])
+            selected.remove(worst_pull)
+            selected.append(best_push)
+        combined = selected
+
+    return sorted([i for i, _ in combined])
+
 def _update_circles(slide_str, comp_vals, strat_vals):
-    # phase: circle2=최대값 막대, circle1=최소값 막대
-    max_idx = comp_vals.index(max(comp_vals))
-    min_idx = comp_vals.index(min(comp_vals))
+    # phase: circle2=최대값 막대, circle1=최소값 막대 (동값이면 각각 첫 번째)
+    max_val = max(comp_vals); min_val = min(comp_vals)
+    max_idx = comp_vals.index(max_val)
+    min_idx = comp_vals.index(min_val)
     cw_p = int(_PHASE_BAR_W * 0.85)
     slide_str = _move_circle(slide_str, 'circle2',
         _bar_cx_phase(max_idx) - cw_p//2, _CIRCLE_PHASE_Y, cw_p, _CIRCLE_PHASE_CY)
     slide_str = _move_circle(slide_str, 'circle1',
         _bar_cx_phase(min_idx) - cw_p//2, _CIRCLE_PHASE_Y, cw_p, _CIRCLE_PHASE_CY)
 
-    # strategy: 평균(idx=3,9) 제외하고 평균과 차이 큰 상위 3개
-    avg = sum(strat_vals) / len(strat_vals)
-    candidates = [(i, v) for i, v in enumerate(strat_vals) if i not in (3, 9)]
-    top3 = sorted([i for i, _ in sorted(candidates, key=lambda x: abs(x[1]-avg), reverse=True)[:3]])
+    # strategy: Pull/Push 각 평균 기준 ±0.3, 최대 3개
+    targets = _get_strat_circle_targets(strat_vals)
     cw_s = int(_STRAT_BAR_W * 0.85)
-    for ci, data_idx in enumerate(top3):
+    for ci, data_idx in enumerate(targets):
         slide_str = _move_circle(slide_str, f'circle{ci+3}',
             _bar_cx_strat(data_idx) - cw_s//2, _CIRCLE_STRAT_Y, cw_s, _CIRCLE_STRAT_CY)
     return slide_str
