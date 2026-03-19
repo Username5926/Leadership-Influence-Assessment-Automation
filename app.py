@@ -163,17 +163,19 @@ def _bar_cx_strat(idx):
     return int(_STRAT_PLOT_X + (idx + 0.5) * _STRAT_BAR_W)
 
 def _update_chart_phase_colors(chart_bytes, vals):
-    """최대→파란색(4480B1), 최소→빨간색(C00000)"""
+    """최대→파란색(4480B1), 최소→빨간색(C00000). 동값이면 모두 색칠."""
     s = chart_bytes.decode('utf-8')
-    max_idx = vals.index(max(vals))
-    min_idx = vals.index(min(vals))
+    max_val = max(vals); min_val = min(vals)
     s = re.sub(r'<c:dPt>.*?</c:dPt>', '', s, flags=re.DOTALL)
-    dpts = (
-        f'<c:dPt><c:idx val="{max_idx}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/>'
-        f'<c:spPr><a:solidFill><a:srgbClr val="4480B1"/></a:solidFill><a:ln><a:noFill/></a:ln><a:effectLst/></c:spPr></c:dPt>'
-        f'<c:dPt><c:idx val="{min_idx}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/>'
-        f'<c:spPr><a:solidFill><a:srgbClr val="C00000"/></a:solidFill><a:ln><a:noFill/></a:ln><a:effectLst/></c:spPr></c:dPt>'
-    )
+    dpts = ''
+    # 최대값 인덱스 모두 파란색 (최대=최소인 경우 skip)
+    if max_val != min_val:
+        for idx in [i for i,v in enumerate(vals) if v == max_val]:
+            dpts += (f'<c:dPt><c:idx val="{idx}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/>'
+                     f'<c:spPr><a:solidFill><a:srgbClr val="4480B1"/></a:solidFill><a:ln><a:noFill/></a:ln><a:effectLst/></c:spPr></c:dPt>')
+        for idx in [i for i,v in enumerate(vals) if v == min_val]:
+            dpts += (f'<c:dPt><c:idx val="{idx}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/>'
+                     f'<c:spPr><a:solidFill><a:srgbClr val="C00000"/></a:solidFill><a:ln><a:noFill/></a:ln><a:effectLst/></c:spPr></c:dPt>')
     s = s.replace('<c:dLbls>', dpts + '<c:dLbls>', 1)
     return s.encode('utf-8')
 
@@ -392,15 +394,7 @@ with st.sidebar:
     st.write("📁 PPT:", pp or "❌")
 
 st.markdown("---")
-col1, col2, col3 = st.columns(3)
-with col1:
-    response_file  = st.file_uploader("① 구글 폼 응답 엑셀 (필수)", type=["xlsx","xls"])
-with col2:
-    excel_tpl_file = st.file_uploader("② 엑셀 템플릿 (선택)", type=["xlsx"])
-with col3:
-    ppt_tpl_file   = st.file_uploader("③ PPT 템플릿 (선택)", type=["pptx"])
-
-st.info("⚠️ PPT 템플릿은 반드시 **슬라이드 2장짜리** 파일이어야 합니다 (PowerPoint에서 1장을 복사해서 2장으로 만든 파일)")
+response_file = st.file_uploader("구글 폼 응답 엑셀 업로드", type=["xlsx","xls"])
 st.markdown("---")
 
 if st.button("🚀 보고서 생성", type="primary", use_container_width=True):
@@ -409,19 +403,11 @@ if st.button("🚀 보고서 생성", type="primary", use_container_width=True):
 
     resp_bytes = response_file.read()
 
-    if excel_tpl_file is not None:
-        excel_tpl = excel_tpl_file.read()
-    else:
-        excel_tpl, ep = find_template(".xlsx")
-        if not excel_tpl: st.error("❌ 엑셀 템플릿 없음"); st.stop()
-        st.success(f"✅ 엑셀 템플릿: {ep}")
+    excel_tpl, ep = find_template(".xlsx")
+    if not excel_tpl: st.error("❌ 엑셀 템플릿 없음 (GitHub 루트에 .xlsx 파일 필요)"); st.stop()
 
-    if ppt_tpl_file is not None:
-        ppt_tpl = ppt_tpl_file.read()
-    else:
-        ppt_tpl, pp = find_template(".pptx")
-        if not ppt_tpl: st.error("❌ PPT 템플릿 없음"); st.stop()
-        st.success(f"✅ PPT 템플릿: {pp}")
+    ppt_tpl, pp = find_template(".pptx")
+    if not ppt_tpl: st.error("❌ PPT 템플릿 없음 (GitHub 루트에 .pptx 파일 필요)"); st.stop()
 
     try:
         people = parse_people(resp_bytes)
