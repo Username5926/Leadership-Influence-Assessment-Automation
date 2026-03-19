@@ -242,7 +242,7 @@ def _update_circles(slide_str, comp_vals, strat_vals):
     # strategy: Pull/Push 각 평균 기준 ±0.3, 최대 3개
     targets = _get_strat_circle_targets(strat_vals)
     cw_s = int(_STRAT_BAR_W * 0.85)
-    OFF_SCREEN = -5000000  # 화면 밖 좌표 (사용 안 하는 circle 숨김)
+    OFF_SCREEN = 5896000  # 두 표 사이 여백에 숨김 (슬라이드 범위 벗어나지 않게)
     for ci in range(3):  # circle3, circle4, circle5
         if ci < len(targets):
             slide_str = _move_circle(slide_str, f'circle{ci+3}',
@@ -250,7 +250,7 @@ def _update_circles(slide_str, comp_vals, strat_vals):
         else:
             # 사용 안 하는 circle은 화면 밖으로
             slide_str = _move_circle(slide_str, f'circle{ci+3}',
-                OFF_SCREEN, OFF_SCREEN, cw_s, _CIRCLE_STRAT_CY)
+                OFF_SCREEN, 3450346, cw_s, _CIRCLE_STRAT_CY)
     return slide_str
 
 def _fill_slide(sl_str, person, result):
