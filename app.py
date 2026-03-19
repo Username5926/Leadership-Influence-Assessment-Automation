@@ -409,8 +409,8 @@ def find_template(ext: str):
 # ══════════════════════════════════════════════════════════════════
 # UI
 # ══════════════════════════════════════════════════════════════════
-st.set_page_config(page_title="리더십 진단 보고서 자동화", layout="wide")
-st.title("CLiCK _ 리더십 영향력 진단 보고서")
+st.set_page_config(page_title="리더십 영향력 진단 결과 자동화", layout="wide")
+st.title("CLiCK _ 리더십 영향력 진단 결과 자동화")
 
 st.markdown("---")
 st.markdown("""
@@ -463,20 +463,20 @@ if st.session_state.get("done"):
 
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("리더십진단_개인별.xlsx", excel_out)
-        zf.writestr("리더십진단_통합.pptx",   ppt_out)
+        zf.writestr("CIAM_리더십영향력_진단지.xlsx", excel_out)
+        zf.writestr("CIAM_리더십영향력_진단결과.pptx",   ppt_out)
 
     d1, d2, d3 = st.columns(3)
     with d1:
         st.download_button("⬇️ ZIP (전체)", data=zip_buf.getvalue(),
-            file_name="리더십진단_결과.zip", mime="application/zip", use_container_width=True)
+            file_name="CIAM_리더십영향력_결과.zip", mime="application/zip", use_container_width=True)
     with d2:
         st.download_button("⬇️ 엑셀", data=excel_out,
-            file_name="리더십진단_개인별.xlsx",
+            file_name="CIAM_리더십영향력_진단지.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True)
     with d3:
         st.download_button("⬇️ PPT", data=ppt_out,
-            file_name="리더십진단_통합.pptx",
+            file_name="CIAM_리더십영향력_진단결과.pptx",
             mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             use_container_width=True)
