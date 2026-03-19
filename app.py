@@ -408,8 +408,7 @@ st.title("CLiCK IAM MICRO _ 리더십 영향력 진단 보고서")
 st.markdown("---")
 st.markdown("""
 **📋 업로드 전 확인사항**
-- 구글 폼 응답을 엑셀로 다운로드한 파일을 업로드해주세요
-- **A열**: 타임스탬프 / **B열**: 성함 / **C열~AF열**: Q1~Q30 응답값 (1~5점)
+- 구글 폼 응답을 엑셀로 다운로드하여 업로드해주세요
 """)
 response_file = st.file_uploader("구글 폼 응답 엑셀 (.xlsx)", type=["xlsx","xls"])
 st.markdown("---")
