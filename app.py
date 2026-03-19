@@ -410,7 +410,7 @@ def find_template(ext: str):
 # UI
 # ══════════════════════════════════════════════════════════════════
 st.set_page_config(page_title="리더십 진단 보고서 자동화", layout="wide")
-st.title("CLiCK IAM MICRO _ 리더십 영향력 진단 보고서")
+st.title("CLiCK _ 리더십 영향력 진단 보고서")
 
 st.markdown("---")
 st.markdown("""
