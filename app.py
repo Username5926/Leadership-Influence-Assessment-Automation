@@ -108,31 +108,6 @@ def build_excel(people, excel_tpl: bytes) -> bytes:
 # slide1 → 1번째 사람, slide2 → 2번째 사람
 # 3번째 이후 → slide2 구조 복제해서 추가
 # ══════════════════════════════════════════════════════════════════
-def _inject_table(slide_str, shape_name, rows_data):
-    start = slide_str.find(f'name="{shape_name}"')
-    if start == -1: return slide_str
-    end = slide_str.find('</p:graphicFrame>', start) + len('</p:graphicFrame>')
-    section = slide_str[start:end]
-    row_matches = list(re.finditer(r'<a:tr\b[^>]*>.*?</a:tr>', section, re.DOTALL))
-    new_section = section
-    for i, (label, val) in enumerate(rows_data):
-        ri = i+1
-        if ri >= len(row_matches): break
-        orig_row = row_matches[ri].group(0)
-        cells = list(re.finditer(r'<a:tc>.*?</a:tc>', orig_row, re.DOTALL))
-        if len(cells) < 2: continue
-        new_row = orig_row
-        for ci, text in enumerate([str(label), f"{float(val):.2f}" if isinstance(val, float) else str(val)]):
-            if ci >= len(cells): break
-            cell_xml = cells[ci].group(0)
-            p_m = re.search(r'<a:p>.*?</a:p>', cell_xml, re.DOTALL)
-            if p_m:
-                new_p = f'<a:p><a:r><a:rPr lang="ko-KR" sz="900" dirty="0"/><a:t>{text}</a:t></a:r></a:p>'
-                new_row = new_row.replace(cell_xml, cell_xml.replace(p_m.group(0), new_p, 1), 1)
-                cells = list(re.finditer(r'<a:tc>.*?</a:tc>', new_row, re.DOTALL))
-        new_section = new_section.replace(orig_row, new_row, 1)
-    return slide_str[:start] + new_section + slide_str[end:]
-
 def _replace_chart_vals(chart_bytes, new_vals):
     s = chart_bytes.decode('utf-8')
     val_m = re.search(r'(<c:val>.*?<c:numCache>)(.*?)(</c:numCache>.*?</c:val>)', s, re.DOTALL)
@@ -242,7 +217,7 @@ def _update_circles(slide_str, comp_vals, strat_vals):
     # strategy: Pull/Push 각 평균 기준 ±0.3, 최대 3개
     targets = _get_strat_circle_targets(strat_vals)
     cw_s = int(_STRAT_BAR_W * 0.85)
-    OFF_SCREEN = 5896000  # 두 표 사이 여백에 숨김 (슬라이드 범위 벗어나지 않게)
+    OFF_SCREEN = -2057475  # 슬라이드 밖 표들 사이 여백 (table_phase, table_strategy와 같은 영역)
     for ci in range(3):  # circle3, circle4, circle5
         if ci < len(targets):
             slide_str = _move_circle(slide_str, f'circle{ci+3}',
@@ -250,18 +225,14 @@ def _update_circles(slide_str, comp_vals, strat_vals):
         else:
             # 사용 안 하는 circle은 화면 밖으로
             slide_str = _move_circle(slide_str, f'circle{ci+3}',
-                OFF_SCREEN, 3450346, cw_s, _CIRCLE_STRAT_CY)
+                OFF_SCREEN, 3450346, cw_s, _CIRCLE_STRAT_CY)  # 두 표 사이 y
     return slide_str
 
 def _fill_slide(sl_str, person, result):
     c=result["competency"]; s=result["skill_raw"]; sa=result["soft_avg"]; ha=result["hard_avg"]
-    phase_data = list(c.items())
-    strat_data = [(k,s[k]) for k in SOFT_SKILLS]+[("소프트스킬 평균",sa)]+[(k,s[k]) for k in HARD_SKILLS]+[("하드스킬 평균",ha)]
     comp_vals  = list(c.values())
     strat_vals = [s[k] for k in SOFT_SKILLS]+[sa]+[s[k] for k in HARD_SKILLS]+[ha]
     sl_str = sl_str.replace("{{NAME}}", person["name"])
-    sl_str = _inject_table(sl_str, "table_phase",    phase_data)
-    sl_str = _inject_table(sl_str, "table_strategy", strat_data)
     sl_str = _update_circles(sl_str, comp_vals, strat_vals)
     return sl_str
 
