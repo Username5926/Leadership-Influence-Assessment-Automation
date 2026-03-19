@@ -145,10 +145,12 @@ def _replace_chart_vals(chart_bytes, new_vals):
     fmt_tag = fmt.group(0) if fmt else '<c:formatCode>0.00</c:formatCode>'
     pts = ''.join(f'<c:pt idx="{i}"><c:v>{v}</c:v></c:pt>' for i,v in enumerate(new_vals))
     s = (s[:val_m.start()] + before + f'{fmt_tag}<c:ptCount val="{len(new_vals)}"/>{pts}' + val_m.group(3) + s[val_m.end():])
-    # y축 범위 0~5 고정
-    s = re.sub(r'<c:scaling>.*?</c:scaling>',
-               '<c:scaling><c:orientation val="minMax"/><c:max val="5"/><c:min val="0"/></c:scaling>',
-               s, flags=re.DOTALL)
+    # y축(valAx) 범위 0~5 고정 - valAx 안의 scaling만 교체
+    s = re.sub(
+        r'(<c:valAx>.*?<c:scaling>).*?(</c:scaling>)',
+        r'\1<c:orientation val="minMax"/><c:max val="5"/><c:min val="0"/>\2',
+        s, flags=re.DOTALL
+    )
     return s.encode('utf-8')
 
 def _new_guids(s):
