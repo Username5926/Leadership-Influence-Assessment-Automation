@@ -251,7 +251,7 @@ def _update_circles(slide_str, comp_vals, strat_vals):
     targets = _get_strat_circle_targets(strat_vals)
     cw_s = int(_STRAT_BAR_W * 0.85)
     OFF_SCREEN = -2057475  # 슬라이드 밖 표들 사이 여백 (table_phase, table_strategy와 같은 영역)
-    for ci in range(3):  # circle3, circle4, circle5
+    for ci in range(4):  # circle3, circle4, circle5, circle6
         if ci < len(targets):
             slide_str = _move_circle(slide_str, f'circle{ci+3}',
                 _bar_cx_strat(targets[ci]) - cw_s//2, _CIRCLE_STRAT_Y, cw_s, _CIRCLE_STRAT_CY)
