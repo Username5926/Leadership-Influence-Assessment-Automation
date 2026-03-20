@@ -219,24 +219,22 @@ def _move_circle(slide_str, circle_name, new_x, new_y, new_cx, new_cy):
     return slide_str[:start] + pic + slide_str[end:]
 
 def _get_strat_circle_targets(strat_vals):
-    """Pull(idx 0~2): 소프트스킬 중 최대값. Push(idx 4~8): 하드스킬 중 최대값.
-    동률이면 해당 값 모두 포함. 합쳐서 최대 3개(초과 시 Pull/Push 각 1개 우선 보장)."""
     pull_vals = [(i, strat_vals[i]) for i in range(3)]
     push_vals = [(i, strat_vals[i]) for i in range(4, 9)]
-
+    
     pull_max = max(v for _, v in pull_vals)
     push_max = max(v for _, v in push_vals)
-
+    
     pull_targets = [i for i, v in pull_vals if v == pull_max]
     push_targets = [i for i, v in push_vals if v == push_max]
-
-    combined = pull_targets + push_targets
-
-    # 3개 초과 시 Pull 1개 + Push 1개로 줄임 (가장 앞 인덱스)
-    if len(combined) > 3:
-        combined = [pull_targets[0], push_targets[0]]
-
-    return sorted(combined)
+    
+    # Pull: 3개 동률이면 0개 / Push: 3개 이상 동률이면 0개
+    if len(pull_targets) == 3:
+        pull_targets = []
+    if len(push_targets) >= 3:
+        push_targets = []
+    
+    return sorted(pull_targets + push_targets)
 
 def _update_circles(slide_str, comp_vals, strat_vals):
     # phase: circle2=최대값 막대, circle1=최소값 막대
