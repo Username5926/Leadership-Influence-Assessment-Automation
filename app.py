@@ -427,15 +427,15 @@ with st.sidebar:
 
     if img_stage:
         st.markdown("**▶ 리더십 영향력 단계**")
-        st.image(img_stage, use_container_width=True)
+        st.image(str(img_stage), width='stretch')
     else:
-        st.warning("mapping_stage.jpg 없음")
+        st.info("mapping_stage.jpg를 GitHub 루트에 업로드해주세요")
 
     if img_strategy:
         st.markdown("**▶ 리더십 영향력 전략**")
-        st.image(img_strategy, use_container_width=True)
+        st.image(str(img_strategy), width='stretch')
     else:
-        st.warning("mapping_strategy.jpg 없음")
+        st.info("mapping_strategy.jpg를 GitHub 루트에 업로드해주세요")
 
 st.title("CLiCK _ 리더십 영향력 진단 결과 자동화")
 
